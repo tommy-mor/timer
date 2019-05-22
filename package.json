@@ -1,0 +1,11 @@
+{
+  "name": "timer",
+  "version": "1.0.0",
+  "description": "daily hour tracker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

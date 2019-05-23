@@ -1,3 +1,12 @@
+//TODO set default zoom to be 1 hr.
+//add buttons to add other types faster
+//add coloring for types
+//add type list decider
+//add submitter for month
+//prevent overlaps 
+//add login/storage maybe (for friends)
+//add stats page
+//data export
 
 // DOM element where the Timeline will be attached
 var container = document.getElementById('visualization');
@@ -8,6 +17,11 @@ var items = new vis.DataSet([
 
 // Configuration for the Timeline
 var options = {
+    snap: function(date, scale, step) {
+        var fifteen = 60 * 60 * 1000 / 4;
+        return Math.round(date / fifteen) * fifteen;
+
+    },
     editable: true,
     onUpdate: function(item, callback) {
         //check if there are collisions
@@ -19,7 +33,7 @@ var options = {
             callback(null)
         }
     },
-    stack: true,
+    stack: false,
     min: moment().startOf('day'),
     max: moment().startOf('day').add(1, 'days')
 };
@@ -30,20 +44,17 @@ function handleDragStart(event) {
     var dragSrcEl = event.target;
 
     event.dataTransfer.effectAllowed = 'move';
-    var itemType = event.target.innerHTML.split('-')[1].trim();
     var item = {
         id: new Date(),
-        type: itemType,
-        content: event.target.innerHTML.split('-')[0].trim()
+        type: "range",
+        content: event.target.innerHTML.trim(),
+        subgroup: 'sg_2'
+        //content: event.target.innerHTML.split('-')[0].trim()
     };
 
-    var isFixedTimes = (event.target.innerHTML.split('-')[2] && event.target.innerHTML.split('-')[2].trim() == 'fixed times')
-    if (isFixedTimes) {
-        item.start = new Date();
-        item.end = new Date(1000 * 60 * 10 + (new Date()).valueOf());
-    }
+    //item.start = new Date();
+    //item.end = new Date(1000 * 60 * 10 + (new Date()).valueOf());
 
-    console.log(item)
     event.dataTransfer.setData("text", JSON.stringify(item));
 }
 

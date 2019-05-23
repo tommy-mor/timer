@@ -1,20 +1,40 @@
 <!DOCTYPE HTML>
 <html>
-    <head>
-        <title>Timeline | Basic demo</title>
-        <style type="text/css">
-            body, html {
-            font-family: sans-serif;
-            }
-        </style>
+  <head>
+	<title>tommy timeline</title>
+	<style type="text/css">
+	  body, html {
+	  font-family: sans-serif;
+	  }
+	</style>
 
-        <script src="node_modules/vis/dist/vis.js"></script>
-        <script src="node_modules/moment/moment.js"></script>
-        <link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
-    </head>
-    <body>
-        <div id="visualization"></div>
-        <script src="index.js"></script>
-		<button onClick="press()">press me</button>
-    </body>
+	<script src="node_modules/vis/dist/vis.js"></script>
+	<script src="node_modules/moment/moment.js"></script>
+	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
+	<link href="custom.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+	<div id="visualization"></div>
+	<button onClick="press()">press me</button>
+	<div class='items-panel'>
+	  <div class='side'>
+		<h3>Items:</h3>
+		<ul class="items">
+		  <li draggable="true" class="item">
+			item 1 - box
+		  </li>
+		  <li draggable="true" class="item">
+			item 2 - point
+		  </li>
+		  <li draggable="true" class="item">
+			item 3 - range
+		  </li>
+		  <li draggable="true" class="item">
+			item 3 - range - fixed times - <br>
+			(start: now, end: now + 10 min)
+		  </li>
+		</ul>
+	  </div>
+	<script src="index.js"></script>
+  </body>
 </html>

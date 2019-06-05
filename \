@@ -44,36 +44,32 @@ li.object-item:before {
 }
 
 
-.t-green {
+.green {
 	background-color: greenyellow;
 	border-color: green;
 }
-.t-blue {
+.blue {
 	background-color: skyblue;
 	border-color: blue;
 }
-.t-red {
+.red {
 	background-color: red;
 	border-color: darkred;
 }
-.t-purple {
+.purple {
 	background-color: mediumPurple;
 	border-color: purple;
 }
-.t-orange {
+.orange {
 	background-color: orange;
 	border-color: darkOrange;
 }
-.t-navy {
+.navy {
 	background-color: darkSlateGray;
 	border-color: Navyt
 }
 
 .label {
-	width: 10em;
-	padding: 3px;
-}
+	width: 100px;
 
-.buttonright {
-	float: right;
 }

@@ -1,9 +1,6 @@
-//TODO set default zoom to be 1 hr.
-//add buttons to add other types faster
-//add coloring for types
+//TODO add adjacent combiner
 //add type list decider
 //add submitter for month
-//prevent overlaps 
 //add login/storage maybe (for friends)
 //add stats page
 //data export
@@ -14,6 +11,31 @@ var container = document.getElementById('visualization');
 // Create a DataSet (allows two way data-binding)
 var timelineItems = new vis.DataSet([
 ]);
+
+//time categories, add button
+var categories = [{ name: 'sleep', class: 'purple' }, { name: 'school', class: 'orange' }, { name: 'bool', class: 'navy' }];
+
+var style = document.createElement('style');
+style.type = 'text/css';
+style.innerHTML = '';
+document.getElementsByTagName('head')[0].appendChild(style);
+
+let stub = document.getElementById('stubForButtons');
+function render() {
+    stub.innerHTML = '';
+    categories.forEach((category) => {
+        var label = document.createElement("div");
+        label.setAttribute("class", 't-' + category.class + " label");
+        label.innerHTML = category.name;
+        var button = document.createElement("button");
+        button.setAttribute("onClick", "addNext(\"" + category.name + "\")");
+        button.innerHTML = "add";
+        button.setAttribute("class", "buttonright");
+        label.append(button);
+        stub.appendChild(label);
+    });
+}
+render();
 
 // Configuration for the Timeline
 var options = {
@@ -85,7 +107,7 @@ function handleDragStart(event) {
         id: new Date(),
         type: "range",
         content: event.target.innerHTML.trim(),
-        subgroup: 'sg_2'
+        subgroup: 'sg_2',
         //content: event.target.innerHTML.split('-')[0].trim()
     };
 
@@ -118,17 +140,35 @@ for (var i = objectItems.length - 1; i >= 0; i--) {
     var objectItem = objectItems[i];
     objectItem.addEventListener('dragstart', handleObjectItemDragStart.bind(this), false);
 }
-function press() {
-    console.log('strst')
-    var item = {
+function addNext(name) {
+    console.log(name)
+    var nitem = {
         id: new Date(),
-        type: "range",
-        content: event.target.innerHTML.trim(),
-        subgroup: 'sg_2'
+        type: 'range',
+        content: 'new event',
+        subgroup: 'sg_2',
+        className: 'green'
         //content: event.target.innerHTML.split('-')[0].trim()
     };
+
+    nitem.start = moment().toDate();
+    nitem.end = (moment() + moment().add(1, 'hour'));
+    timeline.itemsData.add({ start: moment(), type: "range", end: moment().add(1, 'hour') });
 }
 
+function newCategory() {
+    var name = document.getElementById("name").value;
+    var color = document.getElementById("color").value;
+    if (name == '') {
+        alert('make sure name is not empty');
+        return
+    }
+    categories.push({ name: name, class: name })
+    console.log(categories);
+    style.innerHTML = style.innerHTML + '\n';
+    style.innerHTML = style.innerHTML + '.' + 't-' + name + ' { background-color: #' + color + '; }';
+    render();
+}
 // Create a Timeline
 var timeline = new vis.Timeline(container, timelineItems, options);
 

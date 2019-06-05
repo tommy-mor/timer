@@ -35,13 +35,30 @@ var options = {
         }
     },
     onMove: function(item, callback) {
-        var title = 'Do you really want to move the item to\n' +
-            'start: ' + item.start + '\n' +
-            'end: ' + item.end + '?';
 
+        //check if it collides with anyone else
+        timelineItems.forEach((otherItem) => {
+            if (item.id != otherItem.id) { //dont collide with self
+                //first case is to determine if we are before or after new item, second case
+                // is for the actual fail case
+                if (item.end > otherItem.end && item.start < otherItem.end) callback(null)
+                if (item.start < otherItem.start && item.end > otherItem.start) callback(null)
+                if (item.start > otherItem.start && item.end < otherItem.end) callback(null)
+            }
+        })
     },
 
     onMoving: function(item, callback) {
+        timelineItems.forEach((otherItem) => {
+            if (item.id != otherItem.id) { //dont collide with self
+                //first case is to determine if we are before or after new item, second case
+                // is for the actual fail case
+                if (item.end > otherItem.end && item.start < otherItem.end)
+                    item.start = otherItem.end;
+                if (item.start < otherItem.start && item.end > otherItem.start)
+                    item.end = otherItem.start;
+            }
+        })
         let min = moment().startOf('day');
         let max = moment().startOf('day').add(1, 'days');
 
@@ -49,6 +66,7 @@ var options = {
         if (item.start > max) item.start = max;
         if (item.end > max) item.end = max;
 
+        timelineItems.update(item)
         callback(item); // send back the (possibly) changed item
     },
     stack: false,

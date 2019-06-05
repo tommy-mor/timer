@@ -42,10 +42,12 @@ var options = {
     },
 
     onMoving: function(item, callback) {
+        let min = moment().startOf('day');
+        let max = moment().startOf('day').add(1, 'days');
+
         if (item.start < min) item.start = min;
         if (item.start > max) item.start = max;
         if (item.end > max) item.end = max;
-        console.log('test');
 
         callback(item); // send back the (possibly) changed item
     },

@@ -12,7 +12,7 @@
 var container = document.getElementById('visualization');
 
 // Create a DataSet (allows two way data-binding)
-var items = new vis.DataSet([
+var timelineItems = new vis.DataSet([
 ]);
 
 // Configuration for the Timeline
@@ -23,17 +23,34 @@ var options = {
 
     },
     editable: true,
+    maxMinorChars: 5,
     onUpdate: function(item, callback) {
         //check if there are collisions
         if (true) {
-            console.log('test')
+            console.log(item)
             callback(item)
         } else {
             //there is collision
             callback(null)
         }
     },
+    onMove: function(item, callback) {
+        var title = 'Do you really want to move the item to\n' +
+            'start: ' + item.start + '\n' +
+            'end: ' + item.end + '?';
+
+    },
+
+    onMoving: function(item, callback) {
+        if (item.start < min) item.start = min;
+        if (item.start > max) item.start = max;
+        if (item.end > max) item.end = max;
+        console.log('test');
+
+        callback(item); // send back the (possibly) changed item
+    },
     stack: false,
+    zoomable: false,
     min: moment().startOf('day'),
     max: moment().startOf('day').add(1, 'days')
 };
@@ -83,9 +100,16 @@ for (var i = objectItems.length - 1; i >= 0; i--) {
 }
 function press() {
     console.log('strst')
+    var item = {
+        id: new Date(),
+        type: "range",
+        content: event.target.innerHTML.trim(),
+        subgroup: 'sg_2'
+        //content: event.target.innerHTML.split('-')[0].trim()
+    };
 }
 
 // Create a Timeline
-var timeline = new vis.Timeline(container, items, options);
+var timeline = new vis.Timeline(container, timelineItems, options);
 
 //timeline.on('select', function )

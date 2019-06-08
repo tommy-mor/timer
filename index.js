@@ -72,6 +72,10 @@ var options = {
             callback(null)
         }
     },
+    onAdd: function(item, callback) {
+        //disable adding double click items
+        callback(null);
+    },
     onMove: function(item, callback) {
 
         //check if it collides with anyone else

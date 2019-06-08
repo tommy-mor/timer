@@ -1,4 +1,6 @@
 //TODO add adjacent combiner
+//make it so it adds at next open hour, one hour
+//add persistence somehow (start with browser memory, then accounts)
 //add type list decider
 //add submitter for month
 //add login/storage maybe (for friends)
@@ -13,7 +15,13 @@ var timelineItems = new vis.DataSet([
 ]);
 
 //time categories, add button
-var categories = [{ name: 'sleep', class: 'purple' }, { name: 'school', class: 'orange' }, { name: 'bool', class: 'navy' }];
+var categories;
+if (localStorage.getItem('t-categories') == null) {
+    categories = [];
+    localStorage.setItem('t-categories', JSON.stringify(categories));
+} else {
+    categories = JSON.parse(localStorage.getItem('t-categories'));
+}
 
 var style = document.createElement('style');
 style.type = 'text/css';
@@ -24,6 +32,8 @@ let stub = document.getElementById('stubForButtons');
 function render() {
     stub.innerHTML = '';
     categories.forEach((category) => {
+        style.innerHTML = style.innerHTML + '\n';
+        style.innerHTML = style.innerHTML + '.' + 't-' + category.name + ' { background-color: #' + category.color + '; }';
         var label = document.createElement("div");
         label.setAttribute("class", 't-' + category.class + " label");
         label.innerHTML = category.name;
@@ -31,6 +41,12 @@ function render() {
         button.setAttribute("onClick", "addNext(\"" + category.name + "\")");
         button.innerHTML = "add";
         button.setAttribute("class", "buttonright");
+        label.append(button);
+        var button2 = document.createElement("button");
+        button2.setAttribute("onClick", "removeCategory(\"" + category.name + "\")");
+        button2.innerHTML = "x";
+        button2.setAttribute("class", "buttonright");
+        label.append(button2);
         label.append(button);
         stub.appendChild(label);
     });
@@ -130,7 +146,6 @@ function handleObjectItemDragStart(event) {
 
 var items = document.querySelectorAll('.items .item');
 var objectItems = document.querySelectorAll('.object-item');
-
 for (var i = items.length - 1; i >= 0; i--) {
     var item = items[i];
     item.addEventListener('dragstart', handleDragStart.bind(this), false);
@@ -138,6 +153,7 @@ for (var i = items.length - 1; i >= 0; i--) {
 
 for (var i = objectItems.length - 1; i >= 0; i--) {
     var objectItem = objectItems[i];
+
     objectItem.addEventListener('dragstart', handleObjectItemDragStart.bind(this), false);
 }
 function addNext(name) {
@@ -151,7 +167,7 @@ function addNext(name) {
         //content: event.target.innerHTML.split('-')[0].trim()
     };
 
-    nitem.start = moment().toDate();
+    nitem.start = (moment().toDate());
     nitem.end = (moment() + moment().add(1, 'hour'));
     timeline.itemsData.add({ start: moment(), type: "range", end: moment().add(1, 'hour') });
 }
@@ -163,10 +179,9 @@ function newCategory() {
         alert('make sure name is not empty');
         return
     }
-    categories.push({ name: name, class: name })
-    console.log(categories);
-    style.innerHTML = style.innerHTML + '\n';
-    style.innerHTML = style.innerHTML + '.' + 't-' + name + ' { background-color: #' + color + '; }';
+    categories.push({ name: name, class: name, color: color })
+    //make sure the class is also saved in browser storage
+    localStorage.setItem('t-categories', JSON.stringify(categories));
     render();
 }
 // Create a Timeline

@@ -184,6 +184,12 @@ function newCategory() {
     localStorage.setItem('t-categories', JSON.stringify(categories));
     render();
 }
+
+function removeCategory(name) {
+    categories = categories.filter((cat) => cat.name != name)
+    localStorage.setItem('t-categories', JSON.stringify(categories));
+    render();
+}
 // Create a Timeline
 var timeline = new vis.Timeline(container, timelineItems, options);
 

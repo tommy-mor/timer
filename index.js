@@ -32,7 +32,8 @@ function render() {
     stub.innerHTML = '';
     categories.forEach((category) => {
         style.innerHTML = style.innerHTML + '\n';
-        style.innerHTML = style.innerHTML + '.' + 't-' + category.name + ' { background-color: #' + category.color + '; }';
+        //style.innerHTML = style.innerHTML + '.' + 't-' + category.name + ' { background-color: #' + category.color + '; border-color: #' + category.color + ';}';
+        style.innerHTML = style.innerHTML + '.' + 't-' + category.name + ' { background-color: #' + category.color + '; border-color: rgba(0,0,0,.3)}';
         var label = document.createElement("div");
         label.setAttribute("class", 't-' + category.class + " label");
         label.innerHTML = category.name;
@@ -107,7 +108,7 @@ var options = {
         if (item.start > max) item.start = max;
         if (item.end > max) item.end = max;
 
-        timelineItems.update(item)
+        timelineItems.update(item);
         callback(item); // send back the (possibly) changed item
     },
     stack: false,
@@ -170,8 +171,18 @@ function addNext(name) {
         //content: event.target.innerHTML.split('-')[0].trim()
     };
 
-    let start = findFirstHour(timelineItems);
+    let item = findFirstItem(timelineItems);
+
+    let start = item.end;
     let end = moment(start).add(1, 'hour');
+
+    if (item.className == 't-' + name) {
+        //the previous item is the same as this one, glob them together (maybe make this optional)
+        item.end = end;
+        timelineItems.update(item);
+        return
+    }
+
     //timeline.itemsData.add({ start: moment(), type: "range", end: moment().add(1, 'hour') });
     timeline.itemsData.add({ start: start, type: "range", end: end, className: 't-' + name });
 }
@@ -195,9 +206,9 @@ function removeCategory(name) {
     render();
 }
 
-function findFirstHour(dataSet) {
+function findFirstItem(dataSet) {
     console.log(dataSet.length)
-    if (dataSet.length == 0) return moment().startOf('day');
+    if (dataSet.length == 0) return { className: '', end: moment().startOf('day') };
     //chese way
     let arr = [];
     let starts = [];
@@ -209,7 +220,7 @@ function findFirstHour(dataSet) {
 
     //sort by start date, earliest dates first
     arr.sort((a, b) => a.start - b.start);
-    return arr.find((event) => starts.find((start) => moment(start).isSame(event.end)) == undefined).end;
+    return arr.find((event) => starts.find((start) => moment(start).isSame(event.end)) == undefined);
 }
 // Create a Timeline
 var timeline = new vis.Timeline(container, timelineItems, options);

@@ -117,49 +117,6 @@ var options = {
     max: moment().startOf('day').add(1, 'days')
 };
 
-
-
-function handleDragStart(event) {
-    var dragSrcEl = event.target;
-
-    event.dataTransfer.effectAllowed = 'move';
-    var item = {
-        id: new Date(),
-        type: "range",
-        content: event.target.innerHTML.trim(),
-        subgroup: 'sg_2',
-        //content: event.target.innerHTML.split('-')[0].trim()
-    };
-
-    //item.start = new Date();
-    //item.end = new Date(1000 * 60 * 10 + (new Date()).valueOf());
-
-    event.dataTransfer.setData("text", JSON.stringify(item));
-}
-
-function handleObjectItemDragStart(event) {
-    var dragSrcEl = event.target;
-
-    event.dataTransfer.effectAllowed = 'move';
-    var objectItem = {
-        content: 'objectItemData',
-        target: 'item'
-    };
-    event.dataTransfer.setData("text", JSON.stringify(objectItem));
-}
-
-var items = document.querySelectorAll('.items .item');
-var objectItems = document.querySelectorAll('.object-item');
-for (var i = items.length - 1; i >= 0; i--) {
-    var item = items[i];
-    item.addEventListener('dragstart', handleDragStart.bind(this), false);
-}
-
-for (var i = objectItems.length - 1; i >= 0; i--) {
-    var objectItem = objectItems[i];
-
-    objectItem.addEventListener('dragstart', handleObjectItemDragStart.bind(this), false);
-}
 function addNext(name) {
     console.log(name)
     var nitem = {

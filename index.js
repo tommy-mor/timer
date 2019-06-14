@@ -14,8 +14,7 @@ var container = document.getElementById('visualization');
 var timelineItems = new vis.DataSet([
 ]);
 
-//time categories, add button
-var categories;
+//time categories, add button var categories;
 if (localStorage.getItem('t-categories') == null) {
     categories = [];
     localStorage.setItem('t-categories', JSON.stringify(categories));
@@ -171,9 +170,10 @@ function addNext(name) {
         //content: event.target.innerHTML.split('-')[0].trim()
     };
 
-    nitem.start = (moment().toDate());
-    nitem.end = (moment() + moment().add(1, 'hour'));
-    timeline.itemsData.add({ start: moment(), type: "range", end: moment().add(1, 'hour') });
+    let start = findFirstHour(timelineItems);
+    let end = moment(start).add(1, 'hour');
+    //timeline.itemsData.add({ start: moment(), type: "range", end: moment().add(1, 'hour') });
+    timeline.itemsData.add({ start: start, type: "range", end: end, className: 't-' + name });
 }
 
 function newCategory() {
@@ -193,6 +193,23 @@ function removeCategory(name) {
     categories = categories.filter((cat) => cat.name != name)
     localStorage.setItem('t-categories', JSON.stringify(categories));
     render();
+}
+
+function findFirstHour(dataSet) {
+    console.log(dataSet.length)
+    if (dataSet.length == 0) return moment().startOf('day');
+    //chese way
+    let arr = [];
+    let starts = [];
+
+    dataSet.forEach((item) => {
+        arr.push(item);
+        starts.push(item.start);
+    })
+
+    //sort by start date, earliest dates first
+    arr.sort((a, b) => a.start - b.start);
+    return arr.find((event) => starts.find((start) => moment(start).isSame(event.end)) == undefined).end;
 }
 // Create a Timeline
 var timeline = new vis.Timeline(container, timelineItems, options);

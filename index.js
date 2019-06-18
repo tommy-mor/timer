@@ -10,6 +10,12 @@
 // DOM element where the Timeline will be attached
 var container = document.getElementById('visualization');
 
+function getDataFromServer() {
+    var username = document.getElementById('username').value;
+    //TODO eventually use good library for this part, dont use jquery
+    $.get('http://localhost:8001')
+}
+
 // Create a DataSet (allows two way data-binding)
 var timelineItems = new vis.DataSet([
 ]);

@@ -12,9 +12,13 @@
 	<script src="node_modules/moment/moment.js"></script>
 	<link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
 	<link href="custom.css" rel="stylesheet" type="text/css" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
 	<script src="jscolor.js"></script>
   </head>
   <body>
+	<input id="username" placeholder="name of user">
+	<button onClick="getDataFromServer()">get</button>
 	<div id="visualization"></div>
 	<input id="name" placeholder="name of category">
 	<input id="color" class="jscolor" value="ab2567">

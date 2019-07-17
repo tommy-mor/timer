@@ -142,4 +142,5 @@
 (provide initialize-app!
          user-days user-insert-day! day-insert-timechunk!
          app-users app-categories app-insert-user! app-insert-category!
-         user-name)
+         user-name
+         category-name category-color)

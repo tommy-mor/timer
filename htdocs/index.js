@@ -49,7 +49,7 @@ function render() {
 		button.setAttribute("class", "buttonright");
 		label.append(button);
 		var button2 = document.createElement("button");
-		button2.setAttribute("onClick", "removeCategory(\"" + category.name + "\")");
+		button2.setAttribute("onClick", "removeCategory(\"" + category.name +"\",\"" + category.color + "\")");
 		button2.innerHTML = "x";
 		button2.setAttribute("class", "buttonright");
 		label.append(button2);
@@ -165,11 +165,11 @@ function newCategory() {
 	});
 }
 
-function removeCategory(name) {
-	$.get('/category/add', { name: name });
-	categories = categories.filter((cat) => cat.name != name)
-	localStorage.setItem('t-categories', JSON.stringify(categories));
-	render();
+function removeCategory(name, color) {
+	$.ajax({url:'/category/remove/' + name + '/' + color, 'type': 'DELETE'}).done((x)=>{
+		categories = categories.filter((cat) => cat.name != name)
+		render();
+	});
 }
 
 function findFirstItem(dataSet) {

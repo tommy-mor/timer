@@ -118,6 +118,15 @@
    "INSERT INTO categories (name, color) VALUES (?, ?)"
    name color))
 
+; app-remove-category! : app? string string -> void
+; Consumes an app, a category name string and a color name string
+; As a side-effect removes the given category from list of categories
+(define (app-remove-category! an-app name color)
+  (query-exec
+   (app-db an-app)
+   "DELETE FROM categories WHERE name = ? AND color = ?"
+   name color))
+
 ; app-insert-user! : app? string -> void
 ; Consumes an app and a user name string
 ; As a side-effect adds the given user to the table of users
@@ -127,7 +136,7 @@
    "INSERT INTO users (username) VALUES (?)"
    uname))
 
-; day-instert-category! : app? day string string category -> void
+; day-instert-timechunk! : app? day string string category -> void
 ; Consumes an app, a day, two timestamp strings, and a category.
 ; As a side-effect adds timechunk to table with corresponding data
 (define (day-insert-timechunk! an-app a-day starttime endtime a-category)
@@ -158,7 +167,7 @@
 
 (provide initialize-app!
          user-days user-insert-day! day-insert-timechunk!
-         app-users app-categories app-insert-user! app-insert-category!
+         app-users app-categories app-insert-user! app-insert-category! app-remove-category!
          user-name
          category-name category-color
          user->jsexpr

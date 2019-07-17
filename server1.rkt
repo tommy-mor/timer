@@ -22,6 +22,7 @@
     (dispatch-rules
      [("users") (curry render-users-json app)] 
      [("category" "add") #:method "post" (curry add-category app)] 
+     [("category" "remove" (string-arg) (string-arg)) #:method "delete" (curry remove-category app)] 
      [("categories") (curry render-categories-json app)])))
 
 (define (render-users-json an-app request)
@@ -46,6 +47,14 @@
       (response/json
        "ok"))
     (send/suspend/dispatch response-generator)))
+
+(define (remove-category an-app request name color)
+  ;;(app-insert-category! an-app name color)
+  (app-remove-category! an-app name color)
+  (define (response-generator embed/url)
+    (response/json
+     "ok"))
+  (send/suspend/dispatch response-generator))
 
 (define (render-categories-json an-app request)
   (define (response-generator embed/url)

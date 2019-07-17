@@ -15,7 +15,11 @@
 (define (render-app-page an-app request)
   (define (response-generator embed/url)
     (response/xexpr
-     `(html (head (title "My App")))))
+     `(html (head (title "My App"))
+            (body (h1 "list")
+                  ,(render-data (app-users an-app))))))
+  (define (render-data users)
+    `(ol ,@(map (lambda (x) `(li ,(user-name x))) users)))
   (send/suspend/dispatch response-generator))
 
 (require web-server/servlet-env)

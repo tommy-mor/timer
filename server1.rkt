@@ -10,7 +10,7 @@
 ; do authentciation using cookies article on website
 (define (response/json o)
   (response/output
-   (λ (op)
+   (lambda (op)
      (write-json o op))
    #:mime-type #"application/json"))
 
@@ -20,16 +20,34 @@
               (build-path (current-directory)
                           "the-app-data.sqlite"))])
     (dispatch-rules
-     [("users") (curry render-users-page app)] 
-     [("categories") (curry render-categories-page app)])))
+     [("users") (curry render-users-json app)] 
+     [("category" "add") #:method "post" (curry add-category app)] 
+     [("categories") (curry render-categories-json app)])))
 
-(define (render-users-page an-app request)
+(define (render-users-json an-app request)
   (define (response-generator embed/url)
     (response/json
      (map (lambda (x) (user->jsexpr x)) (app-users an-app))))
   (send/suspend/dispatch response-generator))
 
-(define (render-categories-page an-app request)
+; request, string -> string
+; takes request and binding name and returns binding string value
+(define (extract-binding-string req name)
+  (bytes->string/utf-8
+   (binding:form-value
+    (bindings-assq
+     (string->bytes/utf-8 name) (request-bindings/raw req)))))
+
+(define (add-category an-app request)
+  (let ([name (extract-binding-string request "name")]
+        [color (extract-binding-string request "color")])
+    (app-insert-category! an-app name color)
+    (define (response-generator embed/url)
+      (response/json
+       "ok"))
+    (send/suspend/dispatch response-generator)))
+
+(define (render-categories-json an-app request)
   (define (response-generator embed/url)
     (response/json
      (map (lambda (x) (category->jsexpr x)) (app-categories an-app))))

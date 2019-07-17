@@ -24,7 +24,6 @@ var timelineItems = new vis.DataSet([
 categories = [];
 $.get('/categories').done((data)=>{
 	categories=data;
-	console.log(data);
 	render();
 })
 
@@ -158,13 +157,16 @@ function newCategory() {
 		alert('make sure name is not empty');
 		return
 	}
-	categories.push({ name: name, class: name, color: color })
-	//make sure the class is also saved in browser storage
-	localStorage.setItem('t-categories', JSON.stringify(categories));
-	render();
+	$.post('/category/add', { name: name, color: color }).done((x)=> {
+		categories.push({ name: name, class: name, color: color })
+		//make sure the class is also saved in browser storage
+		localStorage.setItem('t-categories', JSON.stringify(categories));
+		render();
+	});
 }
 
 function removeCategory(name) {
+	$.get('/category/add', { name: name });
 	categories = categories.filter((cat) => cat.name != name)
 	localStorage.setItem('t-categories', JSON.stringify(categories));
 	render();

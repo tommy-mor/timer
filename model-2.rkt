@@ -32,14 +32,20 @@
   (define db (sqlite3-connect #:database home #:mode 'create))
   (define the-app (app db))
   (unless (table-exists? db "users")
-    (query-exec db "CREATE TABLE users (userid INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE)"))
+    (query-exec db "CREATE TABLE users (userid INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE)")
+    (app-insert-user! the-app "tommy")
+    (app-insert-user! the-app "connor"))
   (unless (table-exists? db "days")
     (query-exec db
                 (string-append
                  "CREATE TABLE days "
                  "(dayid INTEGER PRIMARY KEY, userid INTEGER, "
                  "date TEXT, "
-                 "FOREIGN KEY (userid) REFERENCES users (userid))")))
+                 "FOREIGN KEY (userid) REFERENCES users (userid))"))
+    (user-insert-day! the-app (first (app-users the-app))
+                      "2019-07-16 00:00:00.000")
+    (user-insert-day! the-app (second (app-users the-app))
+                      "2019-07-16 00:00:00.000"))
   (unless (table-exists? db "timechunks")
     (query-exec db
                 (string-append
@@ -47,12 +53,21 @@
                  "(timechunkid INTEGER PRIMARY KEY, dayid INTEGER, "
                  "start TEXT, end TEXT, categoryid INTEGER, "
                  "FOREIGN KEY (categoryid) REFERENCES categories (categoryid), "
-                 "FOREIGN KEY (dayid) REFERENCES days (dayid))")))
+                 "FOREIGN KEY (dayid) REFERENCES days (dayid))"))
+    (let* ([user (first (app-users the-app))]
+           [day (first (user-days user))]
+           [category (first (app-categories the-app))]
+           [other-category (second (app-categories the-app))])
+      (day-insert-timechunk! the-app day user "2019-07-16 00:00:00.000" "2019-07-16 10:30:00.000" category)
+      (day-insert-timechunk! the-app day user "2019-07-16 10:30:00.000" "2019-07-16 11:30:00.000" other-category)))
   (unless (table-exists? db "categories")
     (query-exec db
                 (string-append
                  "CREATE TABLE categories "
-                 "(categoryid INTEGER PRIMARY KEY, name TEXT NOT NULL, color TEXT NOT NULL)")))
+                 "(categoryid INTEGER PRIMARY KEY, name TEXT NOT NULL, color TEXT NOT NULL)"))
+    (app-insert-category! the-app "homework" "AB2567")
+    (app-insert-category! the-app "gym" "0CAB99"))
+
   the-app)
 
 

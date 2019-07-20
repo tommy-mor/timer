@@ -4,6 +4,7 @@
          json)
 
 ;TODO write macro to automatically write json funciton for struct
+;TODO add userid to timechunk table
 
 ; An app is a (app db)
 ; where db is an sqlite connection
@@ -49,15 +50,18 @@
   (define db (sqlite3-connect #:database home #:mode 'create))
   (define the-app (app db))
   (unless (table-exists? db "users")
+    (println "creating table users")
     (query-exec db "CREATE TABLE users (userid INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE)")
     (app-insert-user! the-app "tommy")
     (app-insert-user! the-app "connor"))
   (unless (table-exists? db "days")
+    (println "creating table days")
     (query-exec db
                 (string-append
                  "CREATE TABLE days "
                  "(dayid INTEGER PRIMARY KEY, userid INTEGER, "
                  "date TEXT, "
+                 "UNIQUE (userid, date), "
                  "FOREIGN KEY (userid) REFERENCES users (userid))"))
     (user-insert-day! the-app (first (app-users the-app))
                       "2019-07-16 00:00:00.000")
@@ -65,6 +69,7 @@
                       "2019-07-16 00:00:00.000"))
 
   (unless (table-exists? db "categories")
+    (println "creating table categories")
     (query-exec db
                 (string-append
                  "CREATE TABLE categories "
@@ -73,19 +78,22 @@
     (app-insert-category! the-app "gym" "0CAB99"))
 
   (unless (table-exists? db "timechunks")
+    (println "creating table timechunks")
     (query-exec db
                 (string-append
                  "CREATE TABLE timechunks "
                  "(timechunkid INTEGER PRIMARY KEY, dayid INTEGER, "
+                 "userid INTEGER, "
                  "start TEXT, end TEXT, categoryid INTEGER, "
+                 "FOREIGN KEY (userid) REFERENCES users (userid), "
                  "FOREIGN KEY (categoryid) REFERENCES categories (categoryid), "
                  "FOREIGN KEY (dayid) REFERENCES days (dayid))"))
     (let* ([user (first (app-users the-app))]
            [day (first (user-days the-app user))]
            [category (first (app-categories the-app))]
            [other-category (second (app-categories the-app))])
-      (day-insert-timechunk! the-app day "2019-07-16 00:00:00.000" "2019-07-16 10:30:00.000" category)
-      (day-insert-timechunk! the-app day "2019-07-16 10:30:00.000" "2019-07-16 11:30:00.000" other-category)))
+      (day-insert-timechunk! the-app user day "2019-07-16 00:00:00.000" "2019-07-16 10:30:00.000" category)
+      (day-insert-timechunk! the-app user day "2019-07-16 10:30:00.000" "2019-07-16 11:30:00.000" other-category)))
   the-app)
 
 ; app-users : app -> (listof user?)
@@ -98,6 +106,16 @@
         (app-db an-app)
         "SELECT userid, username FROM users")))
 
+; app-user : app -> user?
+; Queries the apps users and returns 
+(define (app-user an-app username)
+  (define (vec->user uvec)
+    (user (vector-ref uvec 0) (vector-ref uvec 1)))
+  (vec->user 
+   (query-row
+    (app-db an-app)
+    "SELECT userid, username FROM users WHERE username = ?"
+    username)))
 
 ; app-categories : app -> (listof category?)
 ; Queries the apps category ids converts them into category structs
@@ -139,19 +157,25 @@
 ; day-instert-timechunk! : app? day string string category -> void
 ; Consumes an app, a day, two timestamp strings, and a category.
 ; As a side-effect adds timechunk to table with corresponding data
-(define (day-insert-timechunk! an-app a-day starttime endtime a-category)
+(define (day-insert-timechunk! an-app a-user a-day starttime endtime a-category)
   (query-exec
    (app-db an-app)
-   "INSERT INTO timechunks (dayid, start, end, categoryid) VALUES (?, ?, ?, ?)"
-   (day-dayid a-day) starttime endtime (category-categoryid a-category)))
+   "INSERT INTO timechunks (userid, dayid, start, end, categoryid) VALUES (?, ?, ?, ?, ?)"
+   (user-userid a-user) (day-dayid a-day) starttime endtime (category-categoryid a-category)))
 
-; user-insert-day! : app? user string -> void
+(define (day-timechunks an-app a-day a-user)
+  (query-rows
+   (app-db an-app)
+   "SELECT dayid, start, end, categoryid FROM timechunks WHERE dayid = ? AND userid = ?"
+   (day-dayid a-day) (user-userid a-user)))
+
+; user-insert-day! : app? user string -> user
 ; Consumes an app, a user, and a timestring
 ; As a side-effect adds the given day to the table of days
 (define (user-insert-day! an-app user timestring)
   (query-exec
    (app-db an-app)
-   "INSERT INTO days (userid, date) VALUES (?, ?)"
+   "INSERT OR IGNORE INTO days (userid, date) VALUES (?, ?)"
    (user-userid user) timestring))
 
 ; appusers : app user -> (listof day?)
@@ -165,10 +189,20 @@
         "SELECT dayid, userid, date FROM days WHERE userid = ?"
         (user-userid user))))
 
+(define (user-day an-app user datestring)
+  (define (vec->day dvec)
+    (day (vector-ref dvec 0) (vector-ref dvec 1) (vector-ref dvec 2)))
+  (vec->day
+       (query-row
+        (app-db an-app)
+        "SELECT dayid, userid, date FROM days WHERE userid = ? AND date = ?"
+        (user-userid user) datestring)))
+
 (provide initialize-app!
-         user-days user-insert-day! day-insert-timechunk!
-         app-users app-categories app-insert-user! app-insert-category! app-remove-category!
+         user-days user-day user-insert-day! day-insert-timechunk!
+         app-users app-user app-insert-user!
+         app-categories app-insert-category! app-remove-category!
          user-name
          category-name category-color
-         user->jsexpr
-         category->jsexpr)
+         user->jsexpr timechunk->jsexpr category->jsexpr
+         day-timechunks)

@@ -23,12 +23,25 @@
      [("users") (curry render-users-json app)] 
      [("category" "add") #:method "post" (curry add-category app)] 
      [("category" "remove" (string-arg) (string-arg)) #:method "delete" (curry remove-category app)] 
+     [("day" (string-arg) (string-arg)) (curry render-timechunks-json app)]
      [("categories") (curry render-categories-json app)])))
 
 (define (render-users-json an-app request)
   (define (response-generator embed/url)
     (response/json
      (map (lambda (x) (user->jsexpr x)) (app-users an-app))))
+  (send/suspend/dispatch response-generator))
+
+;; todo make this a route, so that goint go this url is persistent
+(define (render-timechunks-json an-app request username datestring)
+  (define a-user (app-user an-app username))
+  (user-insert-day! an-app a-user datestring) ; insert day, database wont duplicate
+  (define a-day (user-day an-app a-user datestring))
+
+  (define (response-generator embed/url)
+    (response/json
+     (map (lambda (x) (timechunk->jsexpr x))
+          (day-timechunks an-app a-day a-user))))
   (send/suspend/dispatch response-generator))
 
 ; request, string -> string

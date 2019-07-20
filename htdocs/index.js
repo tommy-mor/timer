@@ -6,15 +6,17 @@
 //add login/storage maybe (for friends)
 //add stats page
 //data export
+//todo add category label option
 
 // DOM element where the Timeline will be attached
 var container = document.getElementById('visualization');
 
 function getDataFromServer() {
-    var userverletsername = document.getElementById('username').value;
-    //TODO eventually use good library for this part, dont use jquery
-    var a = $.get('/users');
-	console.log(a);
+    var username = document.getElementById('username').value;
+    var day = document.getElementById('day').value;
+    $.get('/day/' + username + '/' + day).done((x)=>{
+		console.log(x);
+	});
 }
 
 // Create a DataSet (allows two way data-binding)
@@ -155,6 +157,10 @@ function newCategory() {
 	var color = document.getElementById("color").value;
 	if (name == '') {
 		alert('make sure name is not empty');
+		return
+	}
+	if (name.indexOf(' ') != -1) {
+		alert('make sure name does not have spaces');
 		return
 	}
 	$.post('/category/add', { name: name, color: color }).done((x)=> {

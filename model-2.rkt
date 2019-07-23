@@ -31,14 +31,16 @@
 ; takes a timechunk and outputs its jsexpr representation
 (define (timechunk->jsexpr t)
   (hasheq 'start (timechunk-start t)
-          'end (timechunk-end t)))
+          'end (timechunk-end t)
+          'categoryid (timechunk-categoryid t)))
 
 ; a category is a (category categoryid name color)
 ; where categoryid is an integer, name is a string, and color is a string
 (struct category (categoryid name color))
 ; takes a category and outputs its jsexpr representation
 (define (category->jsexpr t)
-  (hasheq 'name (category-name t)
+  (hasheq 'categoryid (category-categoryid t)
+          'name (category-name t)
           'color (category-color t)))
 
 ;; TODO add data examples here
@@ -64,9 +66,9 @@
                  "UNIQUE (userid, date), "
                  "FOREIGN KEY (userid) REFERENCES users (userid))"))
     (user-insert-day! the-app (first (app-users the-app))
-                      "2019-07-16 00:00:00.000")
+                      "2019-07-16T00:00:00.000")
     (user-insert-day! the-app (second (app-users the-app))
-                      "2019-07-16 00:00:00.000"))
+                      "2019-07-16T00:00:00.000"))
 
   (unless (table-exists? db "categories")
     (println "creating table categories")
@@ -92,8 +94,11 @@
            [day (first (user-days the-app user))]
            [category (first (app-categories the-app))]
            [other-category (second (app-categories the-app))])
-      (day-insert-timechunk! the-app user day "2019-07-16 00:00:00.000" "2019-07-16 10:30:00.000" category)
-      (day-insert-timechunk! the-app user day "2019-07-16 10:30:00.000" "2019-07-16 11:30:00.000" other-category)))
+      (println (user-name user))
+      (println (day-datestring day))
+      (println category)
+      (day-insert-timechunk! the-app user day "2019-07-16T00:00:00.000" "2019-07-16T10:30:00.000" category)
+      (day-insert-timechunk! the-app user day "2019-07-16T10:30:00.000" "2019-07-16T11:30:00.000" other-category)))
   the-app)
 
 ; app-users : app -> (listof user?)
@@ -164,10 +169,16 @@
    (user-userid a-user) (day-dayid a-day) starttime endtime (category-categoryid a-category)))
 
 (define (day-timechunks an-app a-day a-user)
-  (query-rows
-   (app-db an-app)
-   "SELECT dayid, start, end, categoryid FROM timechunks WHERE dayid = ? AND userid = ?"
-   (day-dayid a-day) (user-userid a-user)))
+  (println (day-dayid a-day)) (println(user-userid a-user))
+  (define (vec->timechunk dvec)
+    (timechunk (vector-ref dvec 0) (vector-ref dvec 1)
+               (vector-ref dvec 2) (vector-ref dvec 3)
+               (vector-ref dvec 4) (vector-ref dvec 5)))
+  (map vec->timechunk
+       (query-rows
+        (app-db an-app)
+        "SELECT timechunkid, dayid, userid, start, end, categoryid FROM timechunks WHERE dayid = ? AND userid = ?"
+        (day-dayid a-day) (user-userid a-user))))
 
 ; user-insert-day! : app? user string -> user
 ; Consumes an app, a user, and a timestring
@@ -191,18 +202,19 @@
 
 (define (user-day an-app user datestring)
   (define (vec->day dvec)
+    (println dvec)
     (day (vector-ref dvec 0) (vector-ref dvec 1) (vector-ref dvec 2)))
   (vec->day
-       (query-row
-        (app-db an-app)
-        "SELECT dayid, userid, date FROM days WHERE userid = ? AND date = ?"
-        (user-userid user) datestring)))
+   (query-row
+    (app-db an-app)
+    "SELECT dayid, userid, date FROM days WHERE userid = ? AND date = ?"
+    (user-userid user) datestring)))
 
 (provide initialize-app!
          user-days user-day user-insert-day! day-insert-timechunk!
          app-users app-user app-insert-user!
          app-categories app-insert-category! app-remove-category!
-         user-name
+         user-name day-dayid
          category-name category-color
          user->jsexpr timechunk->jsexpr category->jsexpr
          day-timechunks)

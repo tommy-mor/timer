@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+	<title>tommy timeline</title>
+	<style type="text/css">
+	  body, html {
+	  font-family: sans-serif;
+	  }
+	</style>
+
+	<script src="/node_modules/vis/dist/vis.js"></script>
+	<script src="/node_modules/moment/moment.js"></script>
+	<link href="/node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
+	<link href="/custom.css" rel="stylesheet" type="text/css" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+	<script src="/jscolor.js"></script>
+  </head>
+  <body>
+	<a href="/">home</a></br>
+	<input id="username" value ="@username" placeholder="name of user">
+	<input id="day" type="date" value="@day">
+	<button onClick="navigateDay()">go</button>
+
+	<div id="visualization"></div>
+	<input id="name" placeholder="name of category">
+	<input id="color" class="jscolor" value="ab2567">
+	<button onClick="newCategory()">add new category</button>
+	<br/>
+	<div id="stubForButtons"></div>
+	<script src="/timeview.js"></script>
+  </body>
+</html>

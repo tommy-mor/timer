@@ -1,6 +1,7 @@
 #lang racket
 (require web-server/servlet
          web-server/dispatch
+         web-server/templates
          json
          "model-2.rkt")
 
@@ -14,17 +15,31 @@
      (write-json o op))
    #:mime-type #"application/json"))
 
+(define (response/template username day)
+  (response/full
+   200 #"Okay"
+   (current-seconds) TEXT/HTML-MIME-TYPE
+   empty
+   (list (string->bytes/utf-8 (include-template "templates/timeview.html")))))
 
 (define-values (app-dispatch url)
   (let ([app (initialize-app!
               (build-path (current-directory)
                           "the-app-data.sqlite"))])
     (dispatch-rules
+     [("v" (string-arg) (string-arg)) (curry render-template app)]
      [("users") (curry render-users-json app)] 
      [("category" "add") #:method "post" (curry add-category app)] 
      [("category" "remove" (string-arg) (string-arg)) #:method "delete" (curry remove-category app)] 
      [("day" (string-arg) (string-arg)) (curry render-timechunks-json app)]
+     [("remove" "timechunk" (string-arg) (string-arg) (string-arg))
+      #:method "delete" (curry remove-timechunk app)]
      [("categories") (curry render-categories-json app)])))
+
+(define (render-template an-app request username day)
+  (define (response-generator embed/url)
+    (response/template username day))
+  (send/suspend/dispatch response-generator))
 
 (define (render-users-json an-app request)
   (define (response-generator embed/url)
@@ -64,6 +79,18 @@
 (define (remove-category an-app request name color)
   ;;(app-insert-category! an-app name color)
   (app-remove-category! an-app name color)
+  (define (response-generator embed/url)
+    (response/json
+     "ok"))
+  (send/suspend/dispatch response-generator))
+
+(define (remove-timechunk an-app request username start end)
+  ;;---------------------------------------------TODO fix this why not work
+  ;;(app-insert-category! an-app name color)
+  (println username)
+  (println start)
+  (println end)
+  ;;(app-remove-category! an-app name color)
   (define (response-generator embed/url)
     (response/json
      "ok"))

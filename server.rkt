@@ -1,159 +1,113 @@
 #lang racket
-(require web-server/servlet)
-(provide/contract (start (request? . -> . response?)))
+(require web-server/servlet
+         web-server/dispatch
+         web-server/templates
+         json
+         "model-2.rkt")
 
-(require web-server/formlets
-         "model.rkt")
- 
-; start: request -> doesn't return
-; Consumes a request and produces a page that displays
-; all of the web content.
-(define (start request)
-  (render-blog-page
-   (initialize-blog!
-    (build-path (current-directory)
-                "the-blog-data.sqlite"))
-   request))
- 
-; new-post-formlet : formlet (values string? string?)
-; A formlet for requesting a title and body of a post
-(define new-post-formlet
-  (formlet
-   (#%# ,{input-string . => . title}
-        ,{input-string . => . body})
-   (values title body)))
- 
-; render-blog-page: blog request -> doesn't return
-; Produces an HTML page of the content of the
-; blog.
-(define (render-blog-page a-blog request)
-  (define (response-generator embed/url)
-    (response/xexpr
-     `(html (head (title "My Blog"))
-            (body
-             (h1 "My Blog")
-             ,(render-posts a-blog embed/url)
-             (form ([action
-                     ,(embed/url insert-post-handler)])
-                   ,@(formlet-display new-post-formlet)
-                   (input ([type "submit"])))))))
- 
-  (define (insert-post-handler request)
-    (define-values (title body)
-      (formlet-process new-post-formlet request))
-    (blog-insert-post! a-blog title body)
-    (render-blog-page a-blog (redirect/get)))
-  (send/suspend/dispatch response-generator))
- 
-; new-comment-formlet : formlet string
-; A formlet for requesting a comment
-(define new-comment-formlet
-  input-string)
- 
-; render-post-detail-page: post request -> doesn't return
-; Consumes a post and produces a detail page of the post.
-; The user will be able to either insert new comments
-; or go back to render-blog-page.
-(define (render-post-detail-page a-blog a-post request)
-  (define (response-generator embed/url)
-    (response/xexpr
-     `(html (head (title "Post Details"))
-            (body
-             (h1 "Post Details")
-             (h2 ,(post-title a-post))
-             (p ,(post-body a-post))
-             ,(render-as-itemized-list
-               (post-comments a-post))
-             (form ([action
-                     ,(embed/url insert-comment-handler)])
-                   ,@(formlet-display new-comment-formlet)
-                   (input ([type "submit"])))
-             (a ([href ,(embed/url back-handler)])
-                "Back to the blog")))))
- 
-  (define (insert-comment-handler request)
-    (render-confirm-add-comment-page
-     a-blog
-     (formlet-process new-comment-formlet request)
-     a-post
-     request))
- 
-  (define (back-handler request)
-    (render-blog-page a-blog request))
-  (send/suspend/dispatch response-generator))
- 
-; render-confirm-add-comment-page :
-; blog comment post request -> doesn't return
-; Consumes a comment that we intend to add to a post, as well
-; as the request. If the user follows through, adds a comment 
-; and goes back to the display page. Otherwise, goes back to 
-; the detail page of the post.
-(define (render-confirm-add-comment-page a-blog a-comment
-                                         a-post request)
-  (define (response-generator embed/url)
-    (response/xexpr
-     `(html (head (title "Add a Comment"))
-            (body
-             (h1 "Add a Comment")
-             "The comment: " (div (p ,a-comment))
-             "will be added to "
-             (div ,(post-title a-post))
- 
-             (p (a ([href ,(embed/url yes-handler)])
-                   "Yes, add the comment."))
-             (p (a ([href ,(embed/url cancel-handler)])
-                   "No, I changed my mind!"))))))
- 
-  (define (yes-handler request)
-    (post-insert-comment! a-blog a-post a-comment)
-    (render-post-detail-page a-blog a-post (redirect/get)))
- 
-  (define (cancel-handler request)
-    (render-post-detail-page a-blog a-post request))
-  (send/suspend/dispatch response-generator))
- 
-; render-post: post (handler -> string) -> xexpr
-; Consumes a post, produces an xexpr fragment of the post.
-; The fragment contains a link to show a detailed view of the post.
-(define (render-post a-blog a-post embed/url)
-  (define (view-post-handler request)
-    (render-post-detail-page a-blog a-post request))
-  `(div ([class "post"])
-        (a ([href ,(embed/url view-post-handler)])
-           ,(post-title a-post))
-        (p ,(post-body a-post))
-        (div ,(number->string (length (post-comments a-post)))
-             " comment(s)")))
- 
-; render-posts: blog (handler -> string) -> xexpr
-; Consumes a embed/url, produces an xexpr fragment
-; of all its posts.
-(define (render-posts a-blog embed/url)
-  (define (render-post/embed/url a-post)
-    (render-post a-blog a-post embed/url))
-  `(div ([class "posts"])
-        ,@(map render-post/embed/url (blog-posts a-blog))))
- 
-; render-as-itemized-list: (listof xexpr) -> xexpr
-; Consumes a list of items, and produces a rendering as
-; an unorderered list.
-(define (render-as-itemized-list fragments)
-  `(ul ,@(map render-as-item fragments)))
- 
-; render-as-item: xexpr -> xexpr
-; Consumes an xexpr, and produces a rendering
-; as a list item.
-(define (render-as-item a-fragment)
-  `(li ,a-fragment))
+; TODO put index.html as template
+; investigate stateless serverlets
+; investigate continuations, call/cc
+; do authentciation using cookies article on website
+(define (response/json o)
+  (response/output
+   (lambda (op)
+     (write-json o op))
+   #:mime-type #"application/json"))
 
+(define (response/template username day)
+  (response/full
+   200 #"Okay"
+   (current-seconds) TEXT/HTML-MIME-TYPE
+   empty
+   (list (string->bytes/utf-8 (include-template "templates/timeview.html")))))
+
+(define-values (app-dispatch url)
+  (let ([app (initialize-app!
+              (build-path (current-directory)
+                          "the-app-data.sqlite"))])
+    (dispatch-rules
+     [("v" (string-arg) (string-arg)) (curry render-template app)]
+     [("users") (curry render-users-json app)] 
+     [("category" "add") #:method "post" (curry add-category app)] 
+     [("category" "remove" (string-arg) (string-arg)) #:method "delete" (curry remove-category app)] 
+     [("day" (string-arg) (string-arg)) (curry render-timechunks-json app)]
+     [("remove" "timechunk" (string-arg) (string-arg) (string-arg))
+      #:method "delete" (curry remove-timechunk app)]
+     [("categories") (curry render-categories-json app)])))
+
+(define (render-template an-app request username day)
+  (define (response-generator embed/url)
+    (response/template username day))
+  (send/suspend/dispatch response-generator))
+
+(define (render-users-json an-app request)
+  (define (response-generator embed/url)
+    (response/json
+     (map (lambda (x) (user->jsexpr x)) (app-users an-app))))
+  (send/suspend/dispatch response-generator))
+
+;; todo make this a route, so that goint go this url is persistent
+(define (render-timechunks-json an-app request username datestring)
+  (define a-user (app-user an-app username))
+  (user-insert-day! an-app a-user datestring) ; insert day, database wont duplicate
+  (define a-day (user-day an-app a-user datestring))
+
+  (define (response-generator embed/url)
+    (response/json
+     (map (lambda (x) (timechunk->jsexpr x))
+          (day-timechunks an-app a-day a-user))))
+  (send/suspend/dispatch response-generator))
+
+; request, string -> string
+; takes request and binding name and returns binding string value
+(define (extract-binding-string req name)
+  (bytes->string/utf-8
+   (binding:form-value
+    (bindings-assq
+     (string->bytes/utf-8 name) (request-bindings/raw req)))))
+
+(define (add-category an-app request)
+  (let ([name (extract-binding-string request "name")]
+        [color (extract-binding-string request "color")])
+    (app-insert-category! an-app name color)
+    (define (response-generator embed/url)
+      (response/json
+       "ok"))
+    (send/suspend/dispatch response-generator)))
+
+(define (remove-category an-app request name color)
+  ;;(app-insert-category! an-app name color)
+  (app-remove-category! an-app name color)
+  (define (response-generator embed/url)
+    (response/json
+     "ok"))
+  (send/suspend/dispatch response-generator))
+
+(define (remove-timechunk an-app request username start end)
+  ;;---------------------------------------------TODO fix this why not work
+  ;;(app-insert-category! an-app name color)
+  (println username)
+  (println start)
+  (println end)
+  ;;(app-remove-category! an-app name color)
+  (define (response-generator embed/url)
+    (response/json
+     "ok"))
+  (send/suspend/dispatch response-generator))
+
+(define (render-categories-json an-app request)
+  (define (response-generator embed/url)
+    (response/json
+     (map (lambda (x) (category->jsexpr x)) (app-categories an-app))))
+  (send/suspend/dispatch response-generator))
 
 (require web-server/servlet-env)
-(serve/servlet start
+(serve/servlet app-dispatch
                #:launch-browser? #f
                #:quit? #f
                #:listen-ip #f
                #:port 8000
                #:extra-files-paths
                (list (build-path (current-directory) "htdocs"))
-               #:servlet-path
-               "/servlets/server.rkt")
+               #:servlet-regexp #rx"")

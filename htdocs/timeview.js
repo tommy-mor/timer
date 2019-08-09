@@ -16,13 +16,32 @@ let t = moment(day).hours(0).minutes(0);
 
 //load data
 
-$.get('/day/' + username + '/' + t.format('YYYY-MM-DD') + 'T00:00:00.000').done((x)=>{
+categories = {};
+$.when
+$.get('/categories').then((data) => {
+	data.forEach(category=>{
+		console.log(category);
+		categories[category.categoryid] = category;
+	})
+	render();
+	return $.get('/day/' + username + '/' + t.format('YYYY-MM-DD') + 'T00:00:00.000')
+		.then(x => x);
+
+}).done((x) => {
+
+	console.log('day');
 	console.log(x);
 	x.forEach((newItem)=>{
 		console.log(newItem);
-		timeline.itemsData.add({ start: moment(newItem.start), type: "range", end: moment(newItem.end), className: 't-' + categories[newItem.categoryid] });
+		console.log(categories); //TODO fix categroies not having right category ids based on data
+		// NOTE is server problem
+		console.log(categories[newItem.categoryid].name);
+		//timeline.itemsData.add({ start: moment(newItem.start), type: "range", end: moment(newItem.end)});
+		timeline.itemsData.add({ start: moment(newItem.start), type: "range", end: moment(newItem.end), className: 't-' + categories[newItem.categoryid].name });
+
 	});
-});
+})
+
 
 function navigateDay() {
 	var username = document.getElementById('username').value;
@@ -38,13 +57,6 @@ function navigateDay() {
 var timelineItems = new vis.DataSet([
 ]);
 
-categories = {};
-$.get('/categories').done((data)=>{
-	data.forEach(category=>{
-		categories[category.categoryid] = category;
-	})
-	render();
-})
 
 var style = document.createElement('style');
 style.type = 'text/css';
@@ -57,6 +69,7 @@ function render() {
 	style.innerHTML = '';
 	//TODO ----------------------------------------------------------------- fix categories to use categoryid
 	Object.values(categories).forEach((category) => {
+		console.log(category)
 		style.innerHTML = style.innerHTML + '\n';
 		//style.innerHTML = style.innerHTML + '.' + 't-' + category.name + ' { background-color: #' + category.color + '; border-color: #' + category.color + ';}';
 		style.innerHTML = style.innerHTML + '.' + 't-' + category.name + ' { background-color: #' + category.color + '; border-color: rgba(0,0,0,.3)}';
@@ -158,7 +171,13 @@ function addNext(name) {
 
 	let item = findFirstItem(timelineItems);
 
-	let start = item.end;
+
+	let start
+	if(item) {
+		start = item.end;
+	} else {
+		//start = //TODO add correct time here
+	}
 	let end = moment(start).add(1, 'hour');
 
 	if (item.className == 't-' + name) {

@@ -32,11 +32,7 @@ $.get('/categories').then((data) => {
 	console.log('day');
 	console.log(x);
 	x.forEach((newItem)=>{
-		console.log(newItem);
-		console.log(categories); //TODO fix categroies not having right category ids based on data
-		// NOTE is server problem
 		console.log(categories[newItem.categoryid].name);
-		//timeline.itemsData.add({ start: moment(newItem.start), type: "range", end: moment(newItem.end)});
 		timeline.itemsData.add({ start: moment(newItem.start), type: "range", end: moment(newItem.end), className: 't-' + categories[newItem.categoryid].name });
 
 	});
@@ -67,7 +63,6 @@ let stub = document.getElementById('stubForButtons');
 function render() {
 	stub.innerHTML = '';
 	style.innerHTML = '';
-	//TODO ----------------------------------------------------------------- fix categories to use categoryid
 	Object.values(categories).forEach((category) => {
 		console.log(category)
 		style.innerHTML = style.innerHTML + '\n';
@@ -176,7 +171,8 @@ function addNext(name) {
 	if(item) {
 		start = item.end;
 	} else {
-		//start = //TODO add correct time here
+
+		start = moment(day).startOf('day');
 	}
 	let end = moment(start).add(1, 'hour');
 
@@ -202,9 +198,8 @@ function newCategory() {
 		alert('make sure name does not have spaces');
 		return
 	}
-	$.post('/category/add', { name: name, color: color }).done((x)=> {
-		console.log(x.id); //TODO
-		categories.push({ name: name, class: name, color: color })
+	$.post('/category/add', { name: name, color: color }).done((pk)=> {
+		categories[pk] = { name: name, class: name, color: color }
 		render();
 	});
 }

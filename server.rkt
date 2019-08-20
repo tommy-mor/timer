@@ -68,12 +68,12 @@
      (string->bytes/utf-8 name) (request-bindings/raw req)))))
 
 (define (add-category an-app request)
-  (let ([name (extract-binding-string request "name")]
-        [color (extract-binding-string request "color")])
-    (app-insert-category! an-app name color)
+  (let* ([name (extract-binding-string request "name")]
+         [color (extract-binding-string request "color")]
+         [pk (app-insert-category! an-app name color)])
     (define (response-generator embed/url)
       (response/json
-       "ok"))
+       pk))
     (send/suspend/dispatch response-generator)))
 
 (define (remove-category an-app request name color)

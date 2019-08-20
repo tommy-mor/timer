@@ -128,7 +128,7 @@
                #:launch-browser? #f
                #:quit? #f
                #:listen-ip #f
-               #:port 8000
+               #:port 8001
                #:extra-files-paths
                (list (build-path (current-directory) "htdocs"))
                #:servlet-regexp #rx"")

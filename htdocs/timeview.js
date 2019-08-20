@@ -63,7 +63,7 @@ let stub = document.getElementById('stubForButtons');
 function render() {
 	stub.innerHTML = '';
 	style.innerHTML = '';
-	Object.values(categories).forEach((category) => {
+	Object.entries(categories).forEach(([pk, category]) => {
 		console.log(category)
 		style.innerHTML = style.innerHTML + '\n';
 		//style.innerHTML = style.innerHTML + '.' + 't-' + category.name + ' { background-color: #' + category.color + '; border-color: #' + category.color + ';}';
@@ -77,7 +77,7 @@ function render() {
 		button.setAttribute("class", "buttonright");
 		label.append(button);
 		var button2 = document.createElement("button");
-		button2.setAttribute("onClick", "removeCategory(\"" + category.name +"\",\"" + category.color + "\")");
+		button2.setAttribute("onClick", "removeCategory("+ pk +")");
 		button2.innerHTML = "x";
 		button2.setAttribute("class", "buttonright");
 		label.append(button2);
@@ -204,9 +204,9 @@ function newCategory() {
 	});
 }
 
-function removeCategory(name, color) {
-	$.ajax({url:'/category/remove/' + name + '/' + color, 'type': 'DELETE'}).done((x)=>{
-		categories = categories.filter((cat) => cat.name != name)
+function removeCategory(pk) {
+	$.ajax({url:'/category/remove/' + pk, 'type': 'DELETE'}).done((x)=>{
+		delete categories[pk];
 		render();
 	});
 }

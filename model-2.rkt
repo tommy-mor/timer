@@ -146,14 +146,14 @@
     name color)
   (app->most-recent-pk an-app))
 
-; app-remove-category! : app? string string -> void
-; Consumes an app, a category name string and a color name string
+; app-remove-category! : app? integer -> void
+; Consumes an app, and a category primary key
 ; As a side-effect removes the given category from list of categories
-(define (app-remove-category! an-app name color)
+(define (app-remove-category! an-app pk)
   (query-exec
    (app-db an-app)
-   "DELETE FROM categories WHERE name = ? AND color = ?"
-   name color))
+   "DELETE FROM categories WHERE categoryid = ? "
+   pk))
 
 ; app-insert-user! : app? string -> void
 ; Consumes an app and a user name string

@@ -30,7 +30,7 @@
      [("v" (string-arg) (string-arg)) (curry render-template app)]
      [("users") (curry render-users-json app)] 
      [("category" "add") #:method "post" (curry add-category app)] 
-     [("category" "remove" (string-arg) (string-arg)) #:method "delete" (curry remove-category app)] 
+     [("category" "remove" (integer-arg)) #:method "delete" (curry remove-category app)] 
      [("day" (string-arg) (string-arg)) (curry render-timechunks-json app)]
      [("remove" "timechunk" (string-arg) (string-arg) (string-arg))
       #:method "delete" (curry remove-timechunk app)]
@@ -76,9 +76,9 @@
        pk))
     (send/suspend/dispatch response-generator)))
 
-(define (remove-category an-app request name color)
+(define (remove-category an-app request pk)
   ;;(app-insert-category! an-app name color)
-  (app-remove-category! an-app name color)
+  (app-remove-category! an-app pk)
   (define (response-generator embed/url)
     (response/json
      "ok"))

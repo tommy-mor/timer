@@ -166,26 +166,21 @@ var options = {
 
 function addNext(name) {
     console.log(name)
-    var nitem = {
-        id: new Date(),
-        type: 'range',
-        content: 'new event',
-        subgroup: 'sg_2',
-        className: 'green'
-        //content: event.target.innerHTML.split('-')[0].trim()
-    };
-
-    let item = findFirstItem(timelineItems);
+    let [item, next] = findFirstItem(timelineItems);
 
 
     let start
     if (item) {
         start = moment(item.end); //moment because not move, they are reset to JS Date()'s
     } else {
-
         start = moment(day).startOf('day');
     }
     let end = moment(start).add(1, 'hour');
+    if (next && end > moment(next.start)) { // we would overlap with next one
+        end = moment(next.start);
+    }
+
+    //to do, disable adding off screen
 
     let username = document.getElementById('username').value;
     let cpk = Object.values(categories).find(cat => cat.name == name).categoryid;
@@ -233,7 +228,7 @@ function newCategory() {
         return
     }
     $.post('/category/add', { name: name, color: color }).done((pk) => {
-        categories[pk] = { name: name, class: name, color: color }
+        categories[pk] = { name: name, color: color, categoryid: pk }
         render();
     });
 }
@@ -247,20 +242,27 @@ function removeCategory(pk) {
 }
 
 function findFirstItem(dataSet) {
+    //todo fix this shit i just broke
     console.log(dataSet.length)
-    if (dataSet.length == 0) return { className: '', end: moment(day).startOf('day') };
+    if (dataSet.length == 0) return [undefined, undefined]
     //chese way
     let arr = [];
     let starts = [];
 
     dataSet.forEach((item) => {
         arr.push(item);
-        starts.push(item.start);
+        starts.push(moment(item.start));
     })
 
+	/*
+    if (!starts.find(start => moment(start).isSame(moment(day).startOf('day'))))
+        return { className: '', end: moment(day).startOf('day') };
+		*/
+
     //sort by start date, earliest dates first
-    arr.sort((a, b) => a.start - b.start);
-    return arr.find((event) => starts.find((start) => moment(start).isSame(event.end)) == undefined);
+    arr.sort((a, b) => moment(a.start) - moment(b.start));
+    let itemIdx = arr.findIndex((event) => starts.find((start) => moment(start).isSame(moment(event.end))) == undefined);
+    return [arr[itemIdx], arr[itemIdx + 1]];
 }
 // Create a Timeline
 var timeline = new vis.Timeline(container, timelineItems, options);

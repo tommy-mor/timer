@@ -167,11 +167,12 @@
 ; day-instert-timechunk! : app? day string string category -> void
 ; Consumes an app, a day, two timestamp strings, and a category.
 ; As a side-effect adds timechunk to table with corresponding data
-(define (day-insert-timechunk! an-app a-user a-day starttime endtime a-category)
+(define (day-insert-timechunk! an-app a-user a-day starttime endtime categoryid)
   (query-exec
    (app-db an-app)
    "INSERT INTO timechunks (userid, dayid, start, end, categoryid) VALUES (?, ?, ?, ?, ?)"
-   (user-userid a-user) (day-dayid a-day) starttime endtime (category-categoryid a-category)))
+   (user-userid a-user) (day-dayid a-day) starttime endtime categoryid)
+  (app->most-recent-pk an-app))
 
 (define (day-timechunks an-app a-day a-user)
   (println (day-dayid a-day)) (println(user-userid a-user))
@@ -206,6 +207,8 @@
         (user-userid user))))
 
 (define (user-day an-app user datestring)
+  (println user)
+  (println datestring)
   (define (vec->day dvec)
     (println dvec)
     (day (vector-ref dvec 0) (vector-ref dvec 1) (vector-ref dvec 2)))

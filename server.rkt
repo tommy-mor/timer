@@ -32,7 +32,8 @@
      [("category" "add") #:method "post" (curry add-category app)] 
      [("category" "remove" (integer-arg)) #:method "delete" (curry remove-category app)] 
      [("day" (string-arg) (string-arg)) (curry render-timechunks-json app)]
-     [("remove" "timechunk" (string-arg) (string-arg) (string-arg))
+     [("timechunk" "add") #:method "post" (curry add-timechunk app)]
+     [("timechunk" "remove" (string-arg) (string-arg) (string-arg))
       #:method "delete" (curry remove-timechunk app)]
      [("categories") (curry render-categories-json app)])))
 
@@ -83,6 +84,20 @@
     (response/json
      "ok"))
   (send/suspend/dispatch response-generator))
+
+(define (add-timechunk an-app request)
+  (let* ([username (extract-binding-string request "username")]
+         [start (extract-binding-string request "start")]
+         [end (extract-binding-string request "end")]
+         [datestring (extract-binding-string request "daystring")]
+         [categoryid (extract-binding-string request "categoryid")]
+         [a-user (app-user an-app username)]
+         [a-day (user-day an-app a-user datestring)]
+         [pk (day-insert-timechunk! an-app a-user a-day start end categoryid)])
+    (define (response-generator embed/url)
+      (response/json
+       pk))
+    (send/suspend/dispatch response-generator)))
 
 (define (remove-timechunk an-app request username start end)
   ;;---------------------------------------------TODO fix this why not work

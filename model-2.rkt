@@ -102,8 +102,12 @@
       (println (user-name user))
       (println (day-datestring day))
       (println category)
-      (day-insert-timechunk! the-app user day "2019-07-16T00:00:00.000" "2019-07-16T10:30:00.000" category)
-      (day-insert-timechunk! the-app user day "2019-07-16T10:30:00.000" "2019-07-16T11:30:00.000" other-category)))
+      (day-insert-timechunk!
+       the-app user day "2019-07-16T00:00:00.000" "2019-07-16T10:30:00.000"
+       (category-categoryid category))
+      (day-insert-timechunk!
+       the-app user day "2019-07-16T10:30:00.000" "2019-07-16T11:30:00.000"
+       (category-categoryid other-category))))
   the-app)
 
 ; app-users : app -> (listof user?)
@@ -170,6 +174,9 @@
 ; Returns the integer primary key of the item that was inserted
 ; As a side-effect adds timechunk to table with corresponding data
 (define (day-insert-timechunk! an-app a-user a-day starttime endtime categoryid)
+  (println "insert")
+  (println starttime)
+  (println endtime)
   (query-exec
    (app-db an-app)
    "INSERT INTO timechunks (userid, dayid, start, end, categoryid) VALUES (?, ?, ?, ?, ?)"

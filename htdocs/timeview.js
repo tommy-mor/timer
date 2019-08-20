@@ -16,6 +16,9 @@ let t = moment(day).hours(0).minutes(0);
 
 //load data
 
+//todo fix new items not being added to right day.
+//todo fix days not showing up correctly
+
 categories = {};
 $.when
 $.get('/categories').then((data) => {
@@ -175,17 +178,15 @@ function addNext(name) {
 
     let username = document.getElementById('username').value;
     let cpk = Object.values(categories).find(cat => cat.name == name).categoryid;
-    let startstring = start.format('YYYY-MM-DDTHH:MM:SS.sss');
-    let endstring = end.format('YYYY-MM-DDTHH:MM:SS.sss');
+    let startstring = start.format('YYYY-MM-DDTHH:mm:ss.SSS');
+    let endstring = end.format('YYYY-MM-DDTHH:mm:ss.SSS');
     let daystring = moment(day).utc().format('YYYY-MM-DDT00:00:00.000')
-    let startstring_extend = item.start.format('YYYY-MM-DDTHH:MM:SS.sss');
 
-    if (item.className == 't-' + name) {
+    if (item && item.className == 't-' + name) {
+        let startstring_extend = item.start.format('YYYY-MM-DDTHH:mm:ss.SSS');
         //the previous item is the same as this one, glob them together (maybe make this optional)
         console.log('tom');
         console.log(item)
-
-        //todo fix how sometimes timechunkid is not set
 
         $.post('/timechunk/update', {
             timechunkid: item.timechunkid, start: startstring_extend, end: endstring,

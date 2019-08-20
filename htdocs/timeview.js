@@ -248,7 +248,7 @@ function removeCategory(pk) {
 
 function findFirstItem(dataSet) {
     console.log(dataSet.length)
-    if (dataSet.length == 0) return { className: '', end: moment().startOf('day') };
+    if (dataSet.length == 0) return { className: '', end: moment(day).startOf('day') };
     //chese way
     let arr = [];
     let starts = [];

@@ -180,7 +180,7 @@ function addNext(name) {
 
     let start
     if (item) {
-        start = item.end;
+        start = moment(item.end); //moment because not move, they are reset to JS Date()'s
     } else {
 
         start = moment(day).startOf('day');
@@ -194,7 +194,7 @@ function addNext(name) {
     let daystring = moment(day).utc().format('YYYY-MM-DDT00:00:00.000')
 
     if (item && item.className == 't-' + name) {
-        let startstring_extend = item.start.format('YYYY-MM-DDTHH:mm:ss.SSS');
+        let startstring_extend = moment(item.start).format('YYYY-MM-DDTHH:mm:ss.SSS');
         //the previous item is the same as this one, glob them together (maybe make this optional)
         console.log('tom');
         console.log(item)

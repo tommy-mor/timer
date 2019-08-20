@@ -124,6 +124,8 @@ var options = {
                 end: moment(item.end).format('YYYY-MM-DDTHH:mm:ss.SSS'),
             }).done((pk) => {
                 console.log(pk);
+            }).fail((pk) => {
+                callback(null);
             });
         } else { callback(null) }
     },

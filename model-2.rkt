@@ -30,7 +30,8 @@
 (struct timechunk (timechunkid dayid userid start end categoryid))
 ; takes a timechunk and outputs its jsexpr representation
 (define (timechunk->jsexpr t)
-  (hasheq 'start (timechunk-start t)
+  (hasheq 'timechunkid (timechunk-timechunkid t)
+          'start (timechunk-start t)
           'end (timechunk-end t)
           'categoryid (timechunk-categoryid t)))
 
@@ -140,10 +141,10 @@
 ; Consumes an app, a category name string and a color name string
 ; As a side-effect adds the given category to list of categories
 (define (app-insert-category! an-app name color)
-   (query-exec
-    (app-db an-app)
-    "INSERT INTO categories (name, color) VALUES (?, ?)"
-    name color)
+  (query-exec
+   (app-db an-app)
+   "INSERT INTO categories (name, color) VALUES (?, ?)"
+   name color)
   (app->most-recent-pk an-app))
 
 ; app-remove-category! : app? integer -> void
@@ -164,8 +165,9 @@
    "INSERT INTO users (username) VALUES (?)"
    uname))
 
-; day-instert-timechunk! : app? day string string category -> void
+; day-instert-timechunk! : app? day string string category -> integer
 ; Consumes an app, a day, two timestamp strings, and a category.
+; Returns the integer primary key of the item that was inserted
 ; As a side-effect adds timechunk to table with corresponding data
 (define (day-insert-timechunk! an-app a-user a-day starttime endtime categoryid)
   (query-exec
@@ -173,6 +175,28 @@
    "INSERT INTO timechunks (userid, dayid, start, end, categoryid) VALUES (?, ?, ?, ?, ?)"
    (user-userid a-user) (day-dayid a-day) starttime endtime categoryid)
   (app->most-recent-pk an-app))
+
+; day-update-timechunk! : app? integer string string -> void
+; Consumes an app, a timechunkid, and two timestamp strings.
+; As a side-effect updates timechunk in table with corresponding data
+(define (day-update-timechunk! an-app timechunkid starttime endtime)
+  (query-exec
+   (app-db an-app)
+   (string-append
+    "UPDATE timechunks SET "
+    "start = ?, end = ? "
+    "WHERE timechunkid = ?") ; TODO finish this using timechunkid
+   starttime endtime timechunkid)
+  (app->most-recent-pk an-app))
+
+; day-remove-timechunk! : app? integer -> void
+; Consumes an app and an integer, and returns void
+; As a side-effect removes timechunk in table with associated data
+(define (day-remove-timechunk! an-app timechunkid)
+  (query-exec
+   (app-db an-app)
+   "DELETE FROM timechunks WHERE timechunkid = ?"
+   timechunkid))
 
 (define (day-timechunks an-app a-day a-user)
   (println (day-dayid a-day)) (println(user-userid a-user))
@@ -219,7 +243,8 @@
     (user-userid user) datestring)))
 
 (provide initialize-app!
-         user-days user-day user-insert-day! day-insert-timechunk!
+         user-days user-day user-insert-day!
+         day-insert-timechunk! day-update-timechunk! day-remove-timechunk!
          app-users app-user app-insert-user!
          app-categories app-insert-category! app-remove-category!
          user-name day-dayid

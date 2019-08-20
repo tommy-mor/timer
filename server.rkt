@@ -31,11 +31,11 @@
      [("users") (curry render-users-json app)] 
      [("category" "add") #:method "post" (curry add-category app)] 
      [("category" "remove" (integer-arg)) #:method "delete" (curry remove-category app)] 
+     [("categories") (curry render-categories-json app)]
      [("day" (string-arg) (string-arg)) (curry render-timechunks-json app)]
      [("timechunk" "add") #:method "post" (curry add-timechunk app)]
-     [("timechunk" "remove" (string-arg) (string-arg) (string-arg))
-      #:method "delete" (curry remove-timechunk app)]
-     [("categories") (curry render-categories-json app)])))
+     [("timechunk" "update") #:method "post" (curry update-timechunk app)]
+     [("timechunk" "remove" (integer-arg)) #:method "delete" (curry remove-timechunk app)])))
 
 (define (render-template an-app request username day)
   (define (response-generator embed/url)
@@ -99,13 +99,18 @@
        pk))
     (send/suspend/dispatch response-generator)))
 
-(define (remove-timechunk an-app request username start end)
-  ;;---------------------------------------------TODO fix this why not work
-  ;;(app-insert-category! an-app name color)
-  (println username)
-  (println start)
-  (println end)
-  ;;(app-remove-category! an-app name color)
+(define (update-timechunk an-app request)
+  (let* ([timechunkid (extract-binding-string request "timechunkid")]
+         [start (extract-binding-string request "start")]
+         [end (extract-binding-string request "end")]
+         [pk (day-update-timechunk! an-app timechunkid start end)])
+    (define (response-generator embed/url)
+      (response/json
+       pk))
+    (send/suspend/dispatch response-generator)))
+
+(define (remove-timechunk an-app request timechunkid)
+  (day-remove-timechunk! an-app timechunkid)
   (define (response-generator embed/url)
     (response/json
      "ok"))

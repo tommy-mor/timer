@@ -33,7 +33,7 @@ $.get('/categories').then((data) => {
     console.log(x);
     x.forEach((newItem) => {
         console.log(categories[newItem.categoryid].name);
-        timeline.itemsData.add({ start: moment(newItem.start), type: "range", end: moment(newItem.end), className: 't-' + categories[newItem.categoryid].name });
+        timeline.itemsData.add({ start: moment(newItem.start), type: "range", end: moment(newItem.end), className: 't-' + categories[newItem.categoryid].name, timechunkid: newItem.timechunkid });
 
     });
 })
@@ -102,7 +102,7 @@ var options = {
         //disable adding double click items
         callback(null);
     },
-    onMove: function(item, callback) {
+    onMove: function(item, callback) { //TODO fix
 
         //check if it collides with anyone else
         timelineItems.forEach((otherItem) => {
@@ -138,13 +138,8 @@ var options = {
     },
     onRemove: function(item, callback) {
         console.log(item);
-        let username = document.getElementById('username').value;
-        let day = document.getElementById('day').value;
-        let start = moment(item.start).format('YYYY-MM-DDTHH:MM:SS.sss');
-        let end = moment(item.end).format('YYYY-MM-DDTHH:MM:SS.sss');
         $.ajax({
-            url: '/timechunk/remove/' + username + '/' + start +
-                '/' + end, 'type': 'DELETE'
+            url: '/timechunk/remove/' + item.timechunkid, 'type': 'DELETE'
         }).done((x) => {
             callback(item);
         });
@@ -178,30 +173,41 @@ function addNext(name) {
     }
     let end = moment(start).add(1, 'hour');
 
+    let username = document.getElementById('username').value;
+    let cpk = Object.values(categories).find(cat => cat.name == name).categoryid;
+    let startstring = start.format('YYYY-MM-DDTHH:MM:SS.sss');
+    let endstring = end.format('YYYY-MM-DDTHH:MM:SS.sss');
+    let daystring = moment(day).utc().format('YYYY-MM-DDT00:00:00.000')
+    let startstring_extend = item.start.format('YYYY-MM-DDTHH:MM:SS.sss');
+
     if (item.className == 't-' + name) {
         //the previous item is the same as this one, glob them together (maybe make this optional)
-        item.end = end;
-        timelineItems.update(item);
-        return
-    } else {
-        let username = document.getElementById('username').value;
-        let cpk = Object.values(categories).find(cat => cat.name == name).categoryid;
-        let startstring = start.format('YYYY-MM-DDTHH:MM:SS.sss');
-        let endstring = end.format('YYYY-MM-DDTHH:MM:SS.sss');
-        let daystring = moment(day).utc().format('YYYY-MM-DDT00:00:00.000')
+        console.log('tom');
+        console.log(item)
 
+        //todo fix how sometimes timechunkid is not set
+
+        $.post('/timechunk/update', {
+            timechunkid: item.timechunkid, start: startstring_extend, end: endstring,
+        }).done((pk) => {
+            item.end = end;
+            console.log(pk);
+            timelineItems.update(item);
+            render();
+        });
+    } else {
         $.post('/timechunk/add', {
             username: username, start: startstring, end: endstring,
             daystring: daystring,
             categoryid: cpk
         }).done((pk) => {
+            console.log(pk);
             timeline.itemsData.add({
-                start: start, type: "range", end: end, className: 't-' + name
+                start: start, type: "range", end: end, className: 't-' + name, timechunkid: pk,
             });
             render();
         });
     }
-
     //timeline.itemsData.add({ start: moment(), type: "range", end: moment().add(1, 'hour') });
 }
 
@@ -224,6 +230,7 @@ function newCategory() {
 
 function removeCategory(pk) {
     $.ajax({ url: '/category/remove/' + pk, 'type': 'DELETE' }).done((x) => {
+        console.log(x);
         delete categories[pk];
         render();
     });

@@ -17,10 +17,8 @@ let t = moment(day).hours(0).minutes(0);
 //load data
 
 //todo fix new items not being added to right day.
-//todo fix days not showing up correctly
 
 categories = {};
-$.when
 $.get('/categories').then((data) => {
     data.forEach(category => {
         console.log(category);
@@ -106,17 +104,28 @@ var options = {
         callback(null);
     },
     onMove: function(item, callback) { //TODO fix
-
+        let works = true;
         //check if it collides with anyone else
         timelineItems.forEach((otherItem) => {
             if (item.id != otherItem.id) { //dont collide with self
                 //first case is to determine if we are before or after new item, second case
                 // is for the actual fail case
-                if (item.end > otherItem.end && item.start < otherItem.end) callback(null)
-                if (item.start < otherItem.start && item.end > otherItem.start) callback(null)
-                if (item.start > otherItem.start && item.end < otherItem.end) callback(null)
+                if (item.end > otherItem.end && item.start < otherItem.end) works = false;
+                if (item.start < otherItem.start && item.end > otherItem.start) works = false;
+                if (item.start > otherItem.start && item.end < otherItem.end) works = false;
             }
         })
+
+        if (works) {
+            console.log(item);
+            $.post('/timechunk/update', {
+                timechunkid: item.timechunkid,
+                start: moment(item.start).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+                end: moment(item.end).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+            }).done((pk) => {
+                console.log(pk);
+            });
+        } else { callback(null) }
     },
     onMoving: function(item, callback) {
         timelineItems.forEach((otherItem) => {
@@ -129,8 +138,8 @@ var options = {
                     item.end = otherItem.start;
             }
         })
-        let min = moment().startOf('day');
-        let max = moment().startOf('day').add(1, 'days');
+        let min = moment(day).startOf('day');
+        let max = moment(day).startOf('day').add(1, 'days');
 
         if (item.start < min) item.start = min;
         if (item.start > max) item.start = max;
@@ -194,7 +203,6 @@ function addNext(name) {
             item.end = end;
             console.log(pk);
             timelineItems.update(item);
-            render();
         });
     } else {
         $.post('/timechunk/add', {
@@ -206,7 +214,6 @@ function addNext(name) {
             timeline.itemsData.add({
                 start: start, type: "range", end: end, className: 't-' + name, timechunkid: pk,
             });
-            render();
         });
     }
     //timeline.itemsData.add({ start: moment(), type: "range", end: moment().add(1, 'hour') });

@@ -166,7 +166,7 @@
 (define (app-insert-user! an-app uname) 
   (query-exec
    (app-db an-app)
-   "INSERT INTO users (username) VALUES (?)"
+   "INSERT OR IGNORE INTO users (username) VALUES (?)"
    uname))
 
 ; day-instert-timechunk! : app? day string string category -> integer

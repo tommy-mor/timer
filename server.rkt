@@ -38,6 +38,7 @@
      [("timechunk" "remove" (integer-arg)) #:method "delete" (curry remove-timechunk app)])))
 
 (define (render-template an-app request username day)
+  (app-insert-user! an-app username)
   (define (response-generator embed/url)
     (response/template username day))
   (send/suspend/dispatch response-generator))

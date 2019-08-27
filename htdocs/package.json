@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "jquery": "^3.4.1",
+    "jscolor-picker": "^2.0.4",
     "moment": "^2.24.0",
     "vis": "^4.21.0"
   }

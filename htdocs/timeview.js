@@ -19,7 +19,7 @@ let t = moment(day).hours(0).minutes(0);
 //todo fix new items not being added to right day.
 
 categories = {};
-$.get('/categories').then((data) => {
+$.get('/categories/' + username).then((data) => {
     data.forEach(category => {
         console.log(category);
         categories[category.categoryid] = category;
@@ -227,7 +227,7 @@ function newCategory() {
         alert('make sure name does not have spaces');
         return
     }
-    $.post('/category/add', { name: name, color: color }).done((pk) => {
+    $.post('/category/add', { username: username, name: name, color: color }).done((pk) => {
         categories[pk] = { name: name, color: color, categoryid: pk }
         render();
     });

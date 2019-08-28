@@ -31,7 +31,7 @@
      [("users") (curry render-users-json app)] 
      [("category" "add") #:method "post" (curry add-category app)] 
      [("category" "remove" (integer-arg)) #:method "delete" (curry remove-category app)] 
-     [("categories") (curry render-categories-json app)]
+     [("categories" (string-arg)) (curry render-categories-json app)]
      [("day" (string-arg) (string-arg)) (curry render-timechunks-json app)]
      [("timechunk" "add") #:method "post" (curry add-timechunk app)]
      [("timechunk" "update") #:method "post" (curry update-timechunk app)]
@@ -72,7 +72,9 @@
 (define (add-category an-app request)
   (let* ([name (extract-binding-string request "name")]
          [color (extract-binding-string request "color")]
-         [pk (app-insert-category! an-app name color)])
+         [username (extract-binding-string request "username")]
+         [a-user (app-user an-app username)]
+         [pk (app-insert-category! an-app name color a-user)])
     (define (response-generator embed/url)
       (response/json
        pk))
@@ -117,11 +119,12 @@
      "ok"))
   (send/suspend/dispatch response-generator))
 
-(define (render-categories-json an-app request)
-  (define (response-generator embed/url)
-    (response/json
-     (map (lambda (x) (category->jsexpr x)) (app-categories an-app))))
-  (send/suspend/dispatch response-generator))
+(define (render-categories-json an-app request username)
+  (let ([a-user (app-user an-app username)])
+    (define (response-generator embed/url)
+      (response/json
+       (map (lambda (x) (category->jsexpr x)) (app-categories an-app a-user))))
+    (send/suspend/dispatch response-generator)))
 
 (require web-server/servlet-env)
 (serve/servlet app-dispatch

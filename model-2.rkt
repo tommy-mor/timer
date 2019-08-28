@@ -80,9 +80,11 @@
     (query-exec db
                 (string-append
                  "CREATE TABLE categories "
-                 "(categoryid INTEGER PRIMARY KEY, name TEXT NOT NULL, color TEXT NOT NULL)"))
-    (app-insert-category! the-app "homework" "AB2567")
-    (app-insert-category! the-app "gym" "0CAB99"))
+                 "(categoryid INTEGER PRIMARY KEY, userid INTEGER,"
+                 " name TEXT NOT NULL, color TEXT NOT NULL, "
+                 "UNIQUE (userid, name), FOREIGN KEY (userid) REFERENCES users (userid))"))
+    (app-insert-category! the-app "homework" "AB2567" (first (app-users the-app)))
+    (app-insert-category! the-app "gym" "0CAB99" (first (app-users the-app))))
 
   (unless (table-exists? db "timechunks")
     (println "creating table timechunks")
@@ -97,8 +99,8 @@
                  "FOREIGN KEY (dayid) REFERENCES days (dayid))"))
     (let* ([user (first (app-users the-app))]
            [day (first (user-days the-app user))]
-           [category (first (app-categories the-app))]
-           [other-category (second (app-categories the-app))])
+           [category (first (app-categories the-app user))]
+           [other-category (second (app-categories the-app user))])
       (println (user-name user))
       (println (day-datestring day))
       (println category)
@@ -131,24 +133,25 @@
     "SELECT userid, username FROM users WHERE username = ?"
     username)))
 
-; app-categories : app -> (listof category?)
+; app-categories : app user -> (listof category?)
 ; Queries the apps category ids converts them into category structs
-(define (app-categories an-app)
+(define (app-categories an-app a-user)
   (define (vec->category cvec)
     (category (vector-ref cvec 0) (vector-ref cvec 1) (vector-ref cvec 2)))
   (map vec->category
        (query-rows
         (app-db an-app)
-        "SELECT categoryid, name, color FROM categories")))
+        "SELECT categoryid, name, color FROM categories WHERE userid = ?"
+        (user-userid a-user))))
 
 ; app-insert-category! : app? string string -> void
 ; Consumes an app, a category name string and a color name string
 ; As a side-effect adds the given category to list of categories
-(define (app-insert-category! an-app name color)
+(define (app-insert-category! an-app name color a-user)
   (query-exec
    (app-db an-app)
-   "INSERT INTO categories (name, color) VALUES (?, ?)"
-   name color)
+   "INSERT INTO categories (name, color, userid) VALUES (?, ?, ?)"
+   name color (user-userid a-user))
   (app->most-recent-pk an-app))
 
 ; app-remove-category! : app? integer -> void

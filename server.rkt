@@ -3,7 +3,7 @@
          web-server/dispatch
          web-server/templates
          json
-         "model-2.rkt")
+         "model.rkt")
 
 ; TODO put index.html as template
 ; investigate stateless serverlets

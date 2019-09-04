@@ -241,8 +241,8 @@
         (user-userid user))))
 
 ; user->day : app user string -> day
-; Takes in an app, a user, and a datestring
 ; Consumes an app, a user, and a datestring, and produces a day struct
+; Returns the daystruct associated with that user and daystring
 ; As a side effect, a new day may be added if it is not already in db
 (define (user-day an-app user datestring)
   (println user)
